@@ -44,7 +44,7 @@ public class SplunkRawTCPInput extends SplunkInput {
 	 */
 	public SplunkRawTCPInput(String host, int port, String activationKey) throws Exception {
 
-		activationKeyCheck(activationKey);
+		activationKeyCheck(activationKey, true);
 		if (activated) {
 			this.host = host;
 			this.port = port;
