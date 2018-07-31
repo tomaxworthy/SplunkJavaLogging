@@ -25,7 +25,10 @@
 	                       batchMode="true"
 	                       maxBatchSizeBytes="1MB"
 	                       maxBatchSizeEvents="5"
-	                       maxInactiveTimeBeforeBatchFlush="500">
+	                       maxInactiveTimeBeforeBatchFlush="500"
+	                       enabled="true"
+						   errorsToConsole="false"
+	                       >
 	                       
 	        <PatternLayout pattern="%m" /> 
 	         
