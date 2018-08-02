@@ -56,7 +56,7 @@ public class SplunkRestInput extends SplunkInput {
 	public SplunkRestInput(String user, String pass, String host, int port, RestEventData red, boolean stream,
 			String activationKey) throws Exception {
 
-		activationKeyCheck(activationKey);
+		activationKeyCheck(activationKey, true);
 
 		if (activated) {
 			this.host = host;

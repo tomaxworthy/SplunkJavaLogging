@@ -20,6 +20,7 @@
 	<classpathentry kind="lib" path="lib/slf4j-jdk14-1.6.4.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.6.4.jar"/>
 	<classpathentry kind="lib" path="lib/splunk_tlsv12.jar"/>
+	<classpathentry kind="lib" path="lib/gson-2.8.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

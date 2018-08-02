@@ -152,8 +152,10 @@ public abstract class SplunkInput {
 		this.dropEventsOnQueueFull = dropEventsOnQueueFull;
 	}
 
-	protected void activationKeyCheck(String activationKey) {
+	protected void activationKeyCheck(String activationKey, boolean enabled) {
 
+		if (!enabled) this.activated = false;
+			
 		try {
 
 			String toHash = "Java Logging Appenders";

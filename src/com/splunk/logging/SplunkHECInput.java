@@ -20,7 +20,7 @@ import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
-
+import org.apache.http.util.EntityUtils;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
@@ -32,6 +32,8 @@ import org.apache.http.nio.conn.NoopIOSessionStrategy;
 import org.apache.http.nio.conn.SchemeIOSessionStrategy;
 import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
+
+import com.google.gson.*;
 
 /**
  * Common HEC logic shared by all appenders/handlers
@@ -61,7 +63,7 @@ public class SplunkHECInput extends SplunkInput {
 
 	public SplunkHECInput(HECTransportConfig config, String activationKey) throws Exception {
 
-		activationKeyCheck(activationKey);
+		activationKeyCheck(activationKey, config.getEnabled());
 
 		if (activated) {
 			this.config = config;
@@ -120,6 +122,9 @@ public class SplunkHECInput extends SplunkInput {
 					Thread.sleep(1000);
 				} catch (Exception e) {
 					// something went wrong , put message on the queue for retry
+					if (config.getErrorsToConsole()){
+						System.out.println("Failed to forward log via Splunk HEC:" + e.toString());
+					}
 					enqueue(currentMessage);
 					try {
 						closeStream();
@@ -131,7 +136,6 @@ public class SplunkHECInput extends SplunkInput {
 					} catch (Exception e2) {
 					}
 				}
-
 			}
 		}
 	}
@@ -172,34 +176,12 @@ public class SplunkHECInput extends SplunkInput {
 		} catch (Exception e) {
 		}
 	}
-
-	private String wrapMessageInQuotes(String message) {
-
-		return "\"" + message + "\"";
-	}
-
-	/**
-	 * from Tivo
-	 * 
-	 * @param message
-	 * @return
-	 */
-	private String escapeMessageIfNeeded(String message) {
+	
+	private boolean messageConvertedToJson(String message){
 		String trimmedMessage = message.trim();
-		if (trimmedMessage.startsWith("{") && trimmedMessage.endsWith("}")) {
-			// this is *probably* JSON.
-			return trimmedMessage;
-		} else if (trimmedMessage.startsWith("\"") && trimmedMessage.endsWith("\"")
-				&& !message.substring(1, message.length() - 1).contains("\"")) {
-			// this appears to be a quoted string with no internal quotes
-			return trimmedMessage;
-		} else {
-			// don't know what this thing is, so need to escape all quotes, and
-			// then wrap the result in quotes
-			return "\"" + message.replace("\"", "\\\"") + "\"";
-		}
+		return (trimmedMessage.startsWith("{") && trimmedMessage.endsWith("}"));
 	}
-
+	
 	/**
 	 * send an event via stream
 	 * 
@@ -210,19 +192,16 @@ public class SplunkHECInput extends SplunkInput {
 		if (activated) {
 			String currentMessage = "";
 			try {
-
-				message = escapeMessageIfNeeded(message);
-
-				// could use a JSON Object , but the JSON is so trivial , just
-				// building it with a StringBuffer
-				StringBuffer json = new StringBuffer();
-				json.append("{\"").append("event\":").append(message).append(",\"").append("index\":\"")
-						.append(config.getIndex()).append("\",\"").append("source\":\"").append(config.getSource())
-						.append("\",\"").append("sourcetype\":\"").append(config.getSourcetype()).append("\"")
-						.append("}");
-
-				currentMessage = json.toString();
-
+				if (messageConvertedToJson(message)){
+					currentMessage = message;
+				}else
+				{
+					HECTransportMessage messageObject = new HECTransportMessage(message, config.getIndex(),config.getSource(),config.getSourcetype());
+					//splunk is not expecting escaped html chars
+					Gson g = new GsonBuilder().disableHtmlEscaping().create();
+					currentMessage = g.toJson(messageObject);
+				}
+				
 				if (config.isBatchMode()) {
 					lastEventReceivedTime = System.currentTimeMillis();
 					currentBatchSizeBytes += currentMessage.length();
@@ -248,6 +227,10 @@ public class SplunkHECInput extends SplunkInput {
 
 			} catch (Exception e) {
 				// something went wrong , put message on the queue for retry
+				if (config.getErrorsToConsole()){
+					System.out.println(e.getMessage());
+				}
+				
 				enqueue(currentMessage);
 				try {
 					closeStream();
@@ -290,8 +273,10 @@ public class SplunkHECInput extends SplunkInput {
 		post.setEntity(requestEntity);
 		Future<HttpResponse> future = httpClient.execute(post, null);
 		HttpResponse response = future.get();
-		// System.out.println(response.getStatusLine());
-		// System.out.println(EntityUtils.toString(response.getEntity()));
-
+		
+		if (config.getErrorsToConsole() && response.getStatusLine().getStatusCode() != 200){
+			System.out.println(response.getStatusLine());
+		 	System.out.println(EntityUtils.toString(response.getEntity()));
+		}
 	}
 }

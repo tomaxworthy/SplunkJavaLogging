@@ -15,13 +15,14 @@ import com.splunk.logging.SplunkHECInput;
 @Plugin(name = "SplunkHECAppender", category = "Core", elementType = "appender", printObject = true)
 public final class SplunkHECAppender extends AbstractAppender {
 
+	private static final long serialVersionUID = 4214479527471305765L;
 	private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 	private final Lock readLock = rwLock.readLock();
 
 	// connection settings
 	private HECTransportConfig config;
 
-	// queuing settings
+	// queueing settings
 	private String maxQueueSize;
 	private boolean dropEventsOnQueueFull;
 
@@ -88,7 +89,10 @@ public final class SplunkHECAppender extends AbstractAppender {
 			@PluginAttribute("batchMode") boolean batchMode,
 			@PluginAttribute("maxBatchSizeBytes") String maxBatchSizeBytes,
 			@PluginAttribute("maxBatchSizeEvents") long maxBatchSizeEvents,
-			@PluginAttribute("maxInactiveTimeBeforeBatchFlush") long maxInactiveTimeBeforeBatchFlush) {
+			@PluginAttribute("maxInactiveTimeBeforeBatchFlush") long maxInactiveTimeBeforeBatchFlush,
+			@PluginAttribute("enabled") boolean enabled,
+			@PluginAttribute("errorsToConsole") boolean errorsToConsole)
+	{
 
 		if (name == null) {
 			LOGGER.error("No name provided for SplunkHECAppender");
@@ -118,6 +122,9 @@ public final class SplunkHECAppender extends AbstractAppender {
 		config.setMaxBatchSizeBytes(maxBatchSizeBytes);
 		config.setMaxBatchSizeEvents(maxBatchSizeEvents);
 		config.setMaxInactiveTimeBeforeBatchFlush(maxInactiveTimeBeforeBatchFlush);
+		
+		config.setEnabled(enabled);
+		config.setErrorsToConsole(errorsToConsole);
 
 		return new SplunkHECAppender(name, config, dropEventsOnQueueFull, maxQueueSize, filter, layout, true,
 				activationKey);

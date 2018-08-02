@@ -12,6 +12,9 @@ public class HECTransportConfig {
 	private String source = "splunk_javalogging_hec";
 	private String sourcetype = "splunk_javalogging_hec";
 
+	private boolean enabled = true;
+	private boolean errorsToConsole = false;
+	
 	// data size multipliers
 	private static final int KB = 1024;
 	private static final int MB = KB * 1024;
@@ -149,6 +152,22 @@ public class HECTransportConfig {
 
 	public void setMaxInactiveTimeBeforeBatchFlush(long maxInactiveTimeBeforeBatchFlush) {
 		this.maxInactiveTimeBeforeBatchFlush = maxInactiveTimeBeforeBatchFlush;
+	}
+
+	public boolean getEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	public boolean getErrorsToConsole() {
+		return errorsToConsole;
+	}
+
+	public void setErrorsToConsole(boolean errorsToConsole) {
+		this.errorsToConsole = errorsToConsole;
 	}
 
 }
